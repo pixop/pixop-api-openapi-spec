@@ -7,7 +7,7 @@
     "contact" : {
       "email" : "api@pixop.com"
     },
-    "version" : "1.0.0-rc.1"
+    "version" : "1.0.0-rc.2"
   },
   "x-proxy-enabled" : false,
   "externalDocs" : {
@@ -5255,6 +5255,7 @@
       "Page" : {
         "description" : "Represents the pagination details for a result set.",
         "type" : "object",
+        "required" : [ "pageNumber", "pageSize", "numberOfElements", "totalPages", "totalElements" ],
         "properties" : {
           "pageNumber" : {
             "$ref" : "#/components/schemas/PageNumber"
