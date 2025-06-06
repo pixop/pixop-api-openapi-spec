@@ -7,7 +7,7 @@
     "contact" : {
       "email" : "api@pixop.com"
     },
-    "version" : "1.0.0-rc.2"
+    "version" : "1.0.0-rc.3"
   },
   "x-proxy-enabled" : false,
   "externalDocs" : {
@@ -3429,7 +3429,6 @@
       "WebhookEventTypes" : {
         "type" : "array",
         "x-nullable" : true,
-        "nullable" : true,
         "default" : null,
         "description" : "A list of event types the webhook is subscribed to.  \nThe webhook will receive notifications for all specified event types.\nEach event type corresponds to a specific stage or outcome in the processing pipeline.\n- `video_in.started`: Input video copy operation has started\n- `video_in.done`: Input video copy operation completed\n- `video_in.failed`: Input video copy operation failed\n- `video_in.cancelled`: Input video copy operation was cancelled\n- `video_in_ingestion.started`: Ingestion of input video has started\n- `video_in_ingestion.done`: Ingestion of input video completed\n- `video_in_ingestion.failed`: Ingestion of input video failed\n- `video_in_ingestion.cancelled`: Ingestion of input video was cancelled\n- `clip_processing.started`: Video clip processing has started\n- `clip_processing.done`: Video clip processing completed\n- `clip_processing.failed`: Video clip processing failed\n- `clip_processing.cancelled`: Video clip processing was cancelled\n- `clip_ingestion.started`: Ingestion of video clip has started\n- `clip_ingestion.done`: Ingestion of video clip completed\n- `clip_ingestion.failed`: Ingestion of video clip failed\n- `clip_ingestion.cancelled`: Ingestion of video clip was cancelled\n- `video_processing.started`: Video processing has started\n- `video_processing.done`: Video processing completed\n- `video_processing.failed`: Video processing failed\n- `video_processing.cancelled`: Video processing was cancelled\n- `video_processing_ingestion.started`: Ingestion of processed video has started\n- `video_processing_ingestion.done`: Ingestion of processed video completed\n- `video_processing_ingestion.failed`: Ingestion of processed video failed\n- `video_processing_ingestion.cancelled`: Ingestion of processed video was cancelled\n- `video_out.started`: Output video copy operation has started\n- `video_out.done`: Output video copy operation completed\n- `video_out.failed`: Output video copy operation failed\n- `video_out.cancelled`: Output video copy operation was cancelled\n",
         "minItems" : 1,
@@ -4126,8 +4125,13 @@
       },
       "MasteringDisplay" : {
         "type" : "object",
-        "description" : "Represents the SMPTE ST 2086 metadata of a mastering display, describing the display's color volume and luminance characteristics. \nThis metadata defines the primary color chromaticities, white point, and luminance levels for High Dynamic Range (HDR) content mastering.\n",
+        "description" : "Represents the SMPTE ST 2086 metadata of a mastering display, describing the display's color volume and luminance characteristics. \nThis metadata defines the primary color chromaticities, white point, and luminance levels for High Dynamic Range (HDR) content mastering.\nIf `tag` is specified, the individual chromaticity properties (`red`, `green`, `blue`, `whitePoint`) are ignored in favor of the preset values associated with that tag. \nIf `tag` is omitted, the properties `red`, `green`, `blue`, and `whitePoint` must each be defined explicitly.\n",
         "properties" : {
+          "tag" : {
+            "type" : "string",
+            "description" : "Presets for primary color chromaticities and white point, enabling quick selection of standard chromaticity values. For instance:\n  - P3_D65\n    - red: x: 0.68, y: 0.32\n    - green: x: 0.265, y: 0.69\n    - blue: x: 0.15, y: 0.06\n    - whitePoint: x: 0.3127, y: 0.329\n  - BT2020\n    - red: x: 0.708, y: 0.292\n    - green: x: 0.17, y: 0.797\n    - blue: x: 0.131, y: 0.046\n    - whitePoint: x: 0.3127, y: 0.329\n",
+            "enum" : [ "P3_D65", "BT2020" ]
+          },
           "red" : {
             "$ref" : "#/components/schemas/MasteringDisplayPoint",
             "description" : "The chromaticity coordinates for the red primary color."
@@ -4142,10 +4146,11 @@
           },
           "whitePoint" : {
             "$ref" : "#/components/schemas/MasteringDisplayPoint",
-            "description" : "The chromaticity coordinates for the white point, representing the display's reference white."
+            "description" : "The chromaticity coordinates for the white point, representing the display’s reference white."
           },
           "minLuminance" : {
             "type" : "number",
+            "default" : 0.005,
             "minimum" : 0.0,
             "maximum" : 10000.0,
             "description" : "The minimum luminance level of the mastering display, measured in cd/m² (nits). \nThis defines the darkest level the display can achieve.\n",
@@ -4155,7 +4160,7 @@
             "type" : "number",
             "minimum" : 0.0,
             "maximum" : 10000.0,
-            "description" : "The maximum luminance level of the mastering display, measured in cd/m² (nits). \nThis defines the brightest level the display can achieve.\n",
+            "description" : "The maximum luminance level of the mastering display, measured in cd/m² (nits). \nThis defines the brightest level the display can achieve. \nIf omitted, it defaults to `maxCll`; if `maxCll` is also unspecified, it defaults to 1000.\n",
             "examples" : [ 1000.0 ]
           }
         }
@@ -5195,7 +5200,6 @@
             "readOnly" : true,
             "type" : "array",
             "x-nullable" : true,
-            "nullable" : true,
             "default" : null,
             "items" : {
               "$ref" : "#/components/schemas/ValidationError"
