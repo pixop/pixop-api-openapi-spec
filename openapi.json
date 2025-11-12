@@ -7,7 +7,7 @@
     "contact" : {
       "email" : "api@pixop.com"
     },
-    "version" : "1.0.0-rc.5"
+    "version" : "1.0.0-rc.6"
   },
   "x-proxy-enabled" : false,
   "externalDocs" : {
@@ -1633,6 +1633,46 @@
         }
       }
     },
+    "/v1/videos/{videoId}/compare-with/{targetVideoId}" : {
+      "get" : {
+        "tags" : [ "video" ],
+        "summary" : "Get a web comparison link for two videos",
+        "description" : "Provides a link to compare two videos in Pixop Studio, provided both videos have been fully ingested with complete \nframes and a web version, their durations are sufficiently similar, and they share the same master video.\nIf the videos do not meet these criteria, a `409 Conflict` response is returned.\n",
+        "operationId" : "getVideoComparisonLink",
+        "parameters" : [ {
+          "$ref" : "#/components/parameters/VideoId"
+        }, {
+          "$ref" : "#/components/parameters/TargetVideoId"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully retrieved the video comparison link.",
+            "$ref" : "#/components/responses/VideoComparisonLinkResponse"
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/Forbidden"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "409" : {
+            "$ref" : "#/components/responses/Conflict"
+          },
+          "429" : {
+            "$ref" : "#/components/responses/TooManyRequests"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/v1/processing-configurations" : {
       "post" : {
         "tags" : [ "video processing configuration" ],
@@ -1869,6 +1909,8 @@
           "$ref" : "#/components/parameters/VideoProcessingAppraisalId"
         }, {
           "$ref" : "#/components/parameters/VideoNameParam"
+        }, {
+          "$ref" : "#/components/parameters/VideoDescriptionParam"
         } ],
         "responses" : {
           "202" : {
@@ -1912,6 +1954,8 @@
           "$ref" : "#/components/parameters/VideoProcessingConfigurationId"
         }, {
           "$ref" : "#/components/parameters/VideoNameParam"
+        }, {
+          "$ref" : "#/components/parameters/VideoDescriptionParam"
         }, {
           "$ref" : "#/components/parameters/StartPositionMillisecondsParam"
         }, {
@@ -1960,6 +2004,8 @@
           "$ref" : "#/components/parameters/VideoId"
         }, {
           "$ref" : "#/components/parameters/VideoNameParam"
+        }, {
+          "$ref" : "#/components/parameters/VideoDescriptionParam"
         }, {
           "$ref" : "#/components/parameters/StartPositionMillisecondsParam"
         }, {
@@ -3160,6 +3206,9 @@
             },
             "name" : {
               "$ref" : "#/components/schemas/VideoName"
+            },
+            "description" : {
+              "$ref" : "#/components/schemas/VideoDescription"
             },
             "teamId" : {
               "description" : "The ID of the team this video belongs to.",
@@ -5116,6 +5165,7 @@
         "required" : [ "videoId", "presignedUrl", "expiresAt", "fileSize", "mimeType", "fileExtension", "suggestedFileName" ],
         "properties" : {
           "videoId" : {
+            "readOnly" : true,
             "$ref" : "#/components/schemas/UUID",
             "description" : "The unique identifier of the video for which the download URL is generated."
           },
@@ -5159,6 +5209,28 @@
             "readOnly" : true,
             "$ref" : "#/components/schemas/CRC32C",
             "description" : "The CRC32C checksum of the video file, if known, represented as a 32-bit unsigned integer."
+          }
+        }
+      },
+      "VideoComparisonLink" : {
+        "description" : "Details about the video comparison link.",
+        "required" : [ "link", "leftVideoId", "rightVideoId" ],
+        "properties" : {
+          "link" : {
+            "readOnly" : true,
+            "type" : "string",
+            "format" : "uri",
+            "description" : "The URL link used for comparing the source and target videos."
+          },
+          "leftVideoId" : {
+            "readOnly" : true,
+            "$ref" : "#/components/schemas/UUID",
+            "description" : "The unique identifier of the left video in the comparison."
+          },
+          "rightVideoId" : {
+            "readOnly" : true,
+            "$ref" : "#/components/schemas/UUID",
+            "description" : "The unique identifier of the right video in the comparison."
           }
         }
       },
@@ -5355,7 +5427,7 @@
       "ErrorCodeEnum" : {
         "type" : "string",
         "description" : "Enumerates the known error codes returned by the API.\nNot all possible codes are listed here, and additional codes may be introduced in the future.\nWhen present, these values correspond to well-defined application or HTTP errors.\n",
-        "enum" : [ "UNKNOWN", "TOO_MANY_REQUESTS", "INVALID_CREDENTIALS", "ACCOUNT_LOCKED", "ACCOUNT_DISABLED", "ACCOUNT_EXPIRED", "MISSING_API_KEY", "INVALID_API_KEY", "ACCESS_DENIED", "RESOURCE_NOT_FOUND", "TEAM_NOT_FOUND", "DEFAULT_TEAM_NOT_API_ENABLED", "INVALID_INPUT", "FORBIDDEN", "VALIDATION_ERROR", "WEBHOOK_NOT_ACTIVE", "TOO_MANY_WEBHOOK_TEST_EVENTS", "CONTAINER_IS_NOT_SUPPORTED_FOR_SELECTED_CODEC", "INSUFFICIENT_PROJECTED_BALANCE_ERROR", "PROJECT_WITH_VIDEOS_CANNOT_BE_DELETED", "ACTIVE_API_KEY_CANNOT_BE_DELETED", "VIDEO_IN_OPERATION_NOT_FAILED", "VIDEO_OUT_OPERATION_NOT_FAILED", "VIDEO_ALREADY_BEING_COPIED_TO_OUTPUT_LOCATION", "ONGOING_COPY_TO_OUTPUT_NEEDS_TO_BE_RESTARTED_OR_ABANDONED", "BUCKET_NOT_FOUND", "KEY_NOT_FOUND", "HEAD_BUCKET_ERROR", "HEAD_OBJECT_ERROR", "RESOLVE_OBJECT_METADATA_ERROR", "CONTENT_RANGE_HEADER_INVALID", "CONTENT_NOT_PARTIAL_ERROR", "PARSE_CONTENT_TYPE_ERROR", "NO_CONTENT", "OBJECT_ALREADY_EXISTS", "CONFLICTING_DERIVED_VIDEO_IDS", "MAXIMUM_AMOUNT_OF_ACTIVE_API_KEYS_REACHED", "MAXIMUM_AMOUNT_OF_ACTIVE_WEBHOOKS_REACHED", "INVALID_REQUEST_BODY", "MISSING_REQUEST_BODY", "TARGET_RESOLUTION_OUT_OF_ALLOWED_RANGE", "TARGET_RESOLUTION_CANNOT_BE_LOWER_THAN_CALCULATED_ASPECT_RATIO_RESOLUTION", "INVALID_START_POSITION", "INVALID_END_POSITION", "MISSING_CUSTOM_RESOLUTION", "INVALID_INPUT_COLOR_CONVERSION", "INVALID_OUTPUT_COLOR_CONVERSION", "UNSUPPORTED_CONTENT_TYPE", "CHECKSUM_MISMATCH", "VIDEO_IN_RESTART_CHECKSUM_MISMATCH", "INVALID_HTTPS_URL", "UNEXPECTED_CONTENT_RANGE", "VIDEO_PROCESSING_NOT_DONE", "WEBHOOK_RATE_LIMIT_EXCEEDED", "BAD_REQUEST", "UNAUTHORIZED", "NOT_FOUND", "CONFLICT", "INTERNAL_SERVER_ERROR" ],
+        "enum" : [ "UNKNOWN", "TOO_MANY_REQUESTS", "INVALID_CREDENTIALS", "ACCOUNT_LOCKED", "ACCOUNT_DISABLED", "ACCOUNT_EXPIRED", "MISSING_API_KEY", "INVALID_API_KEY", "ACCESS_DENIED", "RESOURCE_NOT_FOUND", "TEAM_NOT_FOUND", "DEFAULT_TEAM_NOT_API_ENABLED", "INVALID_INPUT", "FORBIDDEN", "VALIDATION_ERROR", "WEBHOOK_NOT_ACTIVE", "TOO_MANY_WEBHOOK_TEST_EVENTS", "CONTAINER_IS_NOT_SUPPORTED_FOR_SELECTED_CODEC", "INSUFFICIENT_PROJECTED_BALANCE_ERROR", "PROJECT_WITH_VIDEOS_CANNOT_BE_DELETED", "ACTIVE_API_KEY_CANNOT_BE_DELETED", "VIDEO_IN_OPERATION_NOT_FAILED", "VIDEO_OUT_OPERATION_NOT_FAILED", "VIDEO_ALREADY_BEING_COPIED_TO_OUTPUT_LOCATION", "ONGOING_COPY_TO_OUTPUT_NEEDS_TO_BE_RESTARTED_OR_ABANDONED", "BUCKET_NOT_FOUND", "KEY_NOT_FOUND", "HEAD_BUCKET_ERROR", "HEAD_OBJECT_ERROR", "RESOLVE_OBJECT_METADATA_ERROR", "CONTENT_RANGE_HEADER_INVALID", "CONTENT_NOT_PARTIAL_ERROR", "PARSE_CONTENT_TYPE_ERROR", "NO_CONTENT", "OBJECT_ALREADY_EXISTS", "CONFLICTING_DERIVED_VIDEO_IDS", "MAXIMUM_AMOUNT_OF_ACTIVE_API_KEYS_REACHED", "MAXIMUM_AMOUNT_OF_ACTIVE_WEBHOOKS_REACHED", "INVALID_REQUEST_BODY", "MISSING_REQUEST_BODY", "TARGET_RESOLUTION_OUT_OF_ALLOWED_RANGE", "TARGET_RESOLUTION_CANNOT_BE_LOWER_THAN_CALCULATED_ASPECT_RATIO_RESOLUTION", "INVALID_START_POSITION", "INVALID_END_POSITION", "MISSING_CUSTOM_RESOLUTION", "INVALID_INPUT_COLOR_CONVERSION", "INVALID_OUTPUT_COLOR_CONVERSION", "UNSUPPORTED_CONTENT_TYPE", "CHECKSUM_MISMATCH", "VIDEO_IN_RESTART_CHECKSUM_MISMATCH", "INVALID_HTTPS_URL", "UNEXPECTED_CONTENT_RANGE", "VIDEO_PROCESSING_NOT_DONE", "WEBHOOK_RATE_LIMIT_EXCEEDED", "VIDEO_NOT_FULLY_INGESTED", "VIDEO_COMPARISON_CONFLICT", "BAD_REQUEST", "UNAUTHORIZED", "NOT_FOUND", "CONFLICT", "INTERNAL_SERVER_ERROR" ],
         "x-enumDescriptions" : {
           "UNKNOWN" : "Unknown error",
           "TOO_MANY_REQUESTS" : "Too many requests",
@@ -5411,6 +5483,8 @@
           "UNEXPECTED_CONTENT_RANGE" : "Unexpected content range",
           "VIDEO_PROCESSING_NOT_DONE" : "Video processing not done",
           "WEBHOOK_RATE_LIMIT_EXCEEDED" : "Webhook rate limit exceeded",
+          "VIDEO_NOT_FULLY_INGESTED" : "Video not fully ingested",
+          "VIDEO_COMPARISON_CONFLICT" : "Video comparison conflict.",
           "BAD_REQUEST" : "Standard HTTP 400 Bad Request",
           "UNAUTHORIZED" : "Standard HTTP 401 Unauthorized",
           "NOT_FOUND" : "Standard HTTP 404 Not Found",
@@ -5759,6 +5833,9 @@
         "description" : "Defines the start and end positions of the source video used in processing.",
         "type" : "object",
         "properties" : {
+          "videoId" : {
+            "$ref" : "#/components/schemas/UUID"
+          },
           "startPositionMilliseconds" : {
             "$ref" : "#/components/schemas/StartPositionMilliseconds"
           },
@@ -5831,6 +5908,15 @@
         "in" : "path",
         "required" : true,
         "description" : "The unique identifier for the video.",
+        "schema" : {
+          "$ref" : "#/components/schemas/UUID"
+        }
+      },
+      "TargetVideoId" : {
+        "name" : "targetVideoId",
+        "in" : "path",
+        "required" : true,
+        "description" : "The unique identifier for the target video.",
         "schema" : {
           "$ref" : "#/components/schemas/UUID"
         }
@@ -6081,6 +6167,15 @@
         "required" : false,
         "schema" : {
           "$ref" : "#/components/schemas/VideoName"
+        }
+      },
+      "VideoDescriptionParam" : {
+        "name" : "videoDescription",
+        "in" : "query",
+        "description" : "Optional description for the video.",
+        "required" : false,
+        "schema" : {
+          "$ref" : "#/components/schemas/VideoDescription"
         }
       },
       "StartPositionMillisecondsParam" : {
@@ -6846,6 +6941,27 @@
           "application/json" : {
             "schema" : {
               "$ref" : "#/components/schemas/VideoDownloadUrl"
+            }
+          }
+        },
+        "headers" : {
+          "X-RateLimit-Limit" : {
+            "$ref" : "#/components/headers/X-RateLimit-Limit"
+          },
+          "X-RateLimit-Remaining" : {
+            "$ref" : "#/components/headers/X-RateLimit-Remaining"
+          },
+          "X-RateLimit-Reset" : {
+            "$ref" : "#/components/headers/X-RateLimit-Reset"
+          }
+        }
+      },
+      "VideoComparisonLinkResponse" : {
+        "description" : "Successfully retrieved the video comparison link.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/VideoComparisonLink"
             }
           }
         },
