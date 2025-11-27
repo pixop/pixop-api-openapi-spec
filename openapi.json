@@ -7,7 +7,7 @@
     "contact" : {
       "email" : "api@pixop.com"
     },
-    "version" : "1.0.0-rc.6"
+    "version" : "1.0.0-rc.7"
   },
   "x-proxy-enabled" : false,
   "externalDocs" : {
