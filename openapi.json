@@ -7,7 +7,7 @@
     "contact" : {
       "email" : "api@pixop.com"
     },
-    "version" : "1.0.0-rc.7"
+    "version" : "1.0.0-rc.8"
   },
   "x-proxy-enabled" : false,
   "externalDocs" : {
@@ -75,7 +75,7 @@
       "post" : {
         "tags" : [ "api key" ],
         "summary" : "Create a new API key",
-        "description" : "Creates a new API key associated with the authenticated user. API keys are used for authentication when accessing the Pixop API.\n\nEach user can have up to **2 active API keys**. If this limit is reached, attempts to create an additional active API key will result in a `409 Conflict` response.\n",
+        "description" : "Creates a new API key associated with the authenticated user. API keys are used for authentication when accessing the Pixop API.\n\nEach user can have up to **2 active API keys**. If this limit is reached, attempts to create an additional active API key will result in a `409 Conflict` response.\n        \n**Note**\n- API keys become eligible for automatic deletion if they are not used for authentication for 90 consecutive days.\n  Using a key successfully resets this 90-day inactivity window, but the key may become eligible for deletion again after a later period of inactivity.\n- When a key becomes eligible for deletion, the `deletionEligibleAt` field will indicate the earliest date on which it may be deleted.\n",
         "operationId" : "createApiKey",
         "security" : [ {
           "basic_auth" : [ ]
@@ -3637,6 +3637,12 @@
               "type" : "string",
               "description" : "The full API key. This field is only present in the response when a new API key is created. \nAfterward, the API key is no longer retrievable for security reasons.\n",
               "readOnly" : true
+            },
+            "deletionEligibleAt" : {
+              "type" : "string",
+              "format" : "date",
+              "readOnly" : true,
+              "description" : "Calendar date (YYYY-MM-DD) indicating when this API key becomes eligible for automatic deletion due to inactivity. If the key is successfully used for authentication before this date, it will not be automatically deleted on that date and will remain active for at least another 90 days (a new inactivity window). After that, if it is again unused for a full inactivity window, a new deletionEligibleAt date may be assigned. If this field is null or omitted, the key is not currently eligible for automatic deletion.\n"
             }
           }
         } ]
