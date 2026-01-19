@@ -7,7 +7,7 @@
     "contact" : {
       "email" : "api@pixop.com"
     },
-    "version" : "1.0.0-rc.8"
+    "version" : "1.0.0"
   },
   "x-proxy-enabled" : false,
   "externalDocs" : {
@@ -1677,7 +1677,7 @@
       "post" : {
         "tags" : [ "video processing configuration" ],
         "summary" : "Create a new video processing configuration",
-        "description" : "Creates a new video processing configuration for the selected team.",
+        "description" : "Creates a new video processing configuration for the selected team.\n\n**Important:**  \nThe `options` field is required when creating a new configuration.  \nDue to a limitation in our API documentation provider, `options` is not marked as required in the OpenAPI schema to prevent the interactive request builder from pre-populating unintended fields.\nRequests submitted without `options` will be rejected by the API.\n\n**Using the interactive request builder:**  \nSome optional nested settings (such as certain filter and color-space options) may remain present in the request after being selected once, even if they are later cleared in the UI.\nIf you encounter validation errors or unexpected behavior, please review the generated request payload before submitting it.\nRefreshing the page will reset the request builder and remove any previously selected options.\n",
         "operationId" : "createVideoProcessingConfiguration",
         "parameters" : [ {
           "$ref" : "#/components/parameters/SelectTeamId"
@@ -4383,6 +4383,11 @@
                 "type" : "string",
                 "enum" : [ "CROP" ]
               },
+              "prescaler" : {
+                "description" : "If the source was previously upscaled, `prescaler` can be used to bring the video back closer to its native resolution before running the rest of the processing pipeline. \nThis is useful when working with older upscaled footage, as it helps remove interpolation artifacts and provides a more appropriate base resolution for further restoration and enhancement. \n**Additional settings must be set on `filterSettings.prescaledResolution`** E.g.:\n- `SCALE`:  Bicubic Interpolation. Classic scaler using the bicubic interpolation resampling method.\n",
+                "type" : "string",
+                "enum" : [ "SCALE" ]
+              },
               "denoiser" : {
                 "description" : "Specifies the denoiser to use for video processing. For instance:\n- `DENOISE`: Pixop's deep neural network-based video denoiser trained on a spatio-temporal gaussian noise model.\n- `HQDN3D`: High Quality DeNoise 3D. Classic denoiser based on a three-way low-pass filter, which can completely remove high-frequency noise while minimizing blending artifacts.\n",
                 "type" : "string",
@@ -4497,6 +4502,29 @@
                     "minimum" : 0,
                     "description" : "The Y-coordinate of the top-left corner of the cropped rectangle.",
                     "examples" : [ 50 ]
+                  }
+                }
+              },
+              "prescaledResolution" : {
+                "description" : "Defines the resolution settings for prescaling when `filters.prescaler` is used.\n",
+                "required" : [ "width", "height" ],
+                "type" : "object",
+                "properties" : {
+                  "width" : {
+                    "type" : "integer",
+                    "format" : "int32",
+                    "minimum" : 16,
+                    "maximum" : 7680,
+                    "description" : "Width of the prescaled video in pixels.",
+                    "examples" : [ 768, 1024, 640, 854 ]
+                  },
+                  "height" : {
+                    "type" : "integer",
+                    "format" : "int32",
+                    "minimum" : 16,
+                    "maximum" : 4320,
+                    "description" : "Height of the prescaled video in pixels.",
+                    "examples" : [ 576, 480 ]
                   }
                 }
               },
@@ -4758,7 +4786,8 @@
       },
       "VideoProcessingConfigurationPost" : {
         "type" : "object",
-        "required" : [ "name", "options" ],
+        "required" : [ "name" ],
+        "description" : "Represents the payload for creating a new video processing configuration.\nThis includes the configuration’s name, processing options, and an optional description.\n\n**Important:**  \nThe `options` field is required when creating a new configuration.  \nDue to a limitation in our API documentation provider, `options` is not marked as\nrequired in the OpenAPI schema to prevent the interactive request builder from\npre-populating unintended fields. Requests submitted without `options` will be\nrejected by the API.\n",
         "properties" : {
           "name" : {
             "$ref" : "#/components/schemas/VideoProcessingConfigurationName",
@@ -4766,7 +4795,7 @@
           },
           "options" : {
             "$ref" : "#/components/schemas/VideoProcessingConfigurationOptions",
-            "description" : "The options and settings to apply to the video processing configuration."
+            "description" : "The options and settings to apply to the video processing configuration. **This field is required.**"
           },
           "description" : {
             "$ref" : "#/components/schemas/VideoProcessingConfigurationDescription",
