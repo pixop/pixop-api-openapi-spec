@@ -7,7 +7,7 @@
     "contact" : {
       "email" : "api@pixop.com"
     },
-    "version" : "1.0.3"
+    "version" : "2.0.0"
   },
   "x-proxy-enabled" : false,
   "externalDocs" : {
@@ -28,8 +28,11 @@
     "name" : "account",
     "description" : "Operations for viewing user account details."
   }, {
-    "name" : "billing",
-    "description" : "Operations for viewing billing and payment information."
+    "name" : "stripe-billing",
+    "description" : "Stripe/wallet billing operations."
+  }, {
+    "name" : "aws-marketplace-billing",
+    "description" : "AWS Marketplace billing, subscription, and usage operations."
   }, {
     "name" : "team",
     "description" : "Operations for viewing team details."
@@ -348,12 +351,12 @@
         }
       }
     },
-    "/v1/account/financial-details" : {
+    "/v2/stripe/financial-details" : {
       "get" : {
-        "tags" : [ "account" ],
-        "summary" : "Retrieve financial details",
-        "description" : "Retrieves financial details, including the current balances and total processing amount spent for the selected team.",
-        "operationId" : "getFinancialDetails",
+        "tags" : [ "stripe-billing" ],
+        "summary" : "Retrieve Stripe financial details",
+        "description" : "Retrieves financial details for Stripe/wallet-billed teams, including the current balances and total processing amount spent for the selected team.",
+        "operationId" : "getStripeFinancialDetails",
         "parameters" : [ {
           "$ref" : "#/components/parameters/SelectTeamId"
         } ],
@@ -382,12 +385,12 @@
         }
       }
     },
-    "/v1/billing-periods" : {
+    "/v2/stripe/billing-periods" : {
       "get" : {
-        "tags" : [ "billing" ],
-        "summary" : "Retrieve paginated list of billing periods",
-        "description" : "Retrieves a paginated list of billing periods associated with the provided API key.",
-        "operationId" : "getBillingPeriods",
+        "tags" : [ "stripe-billing" ],
+        "summary" : "Retrieve paginated list of Stripe billing periods",
+        "description" : "Retrieves a paginated list of Stripe billing periods associated with the provided API key.",
+        "operationId" : "getStripeBillingPeriods",
         "parameters" : [ {
           "$ref" : "#/components/parameters/PageNumberParam"
         }, {
@@ -430,12 +433,12 @@
         }
       }
     },
-    "/v1/billing-periods/{id}" : {
+    "/v2/stripe/billing-periods/{id}" : {
       "get" : {
-        "tags" : [ "billing" ],
-        "summary" : "Retrieve billing period details",
-        "description" : "Retrieves the details of a specific billing period by its unique identifier.",
-        "operationId" : "getBillingPeriodById",
+        "tags" : [ "stripe-billing" ],
+        "summary" : "Retrieve Stripe billing period details",
+        "description" : "Retrieves the details of a specific Stripe billing period.",
+        "operationId" : "getStripeBillingPeriodById",
         "parameters" : [ {
           "$ref" : "#/components/parameters/IdPathParam"
         } ],
@@ -464,12 +467,12 @@
         }
       }
     },
-    "/v1/billing-periods/{id}/transactions" : {
+    "/v2/stripe/billing-periods/{id}/transactions" : {
       "get" : {
-        "tags" : [ "billing" ],
-        "summary" : "Retrieve transactions for a billing period",
-        "description" : "Retrieves a paginated list of transactions for a specific billing period, sorted by date.",
-        "operationId" : "getTransactionsByBillingPeriodId",
+        "tags" : [ "stripe-billing" ],
+        "summary" : "Retrieve transactions for a Stripe billing period",
+        "description" : "Retrieves a paginated list of transactions for a specific Stripe billing period. `FilterByFromDateTimeParam` defaults to the creation date of the team.",
+        "operationId" : "getStripeTransactionsByBillingPeriodId",
         "parameters" : [ {
           "$ref" : "#/components/parameters/IdPathParam"
         }, {
@@ -479,11 +482,11 @@
         }, {
           "$ref" : "#/components/parameters/SortDirectionParam"
         }, {
-          "$ref" : "#/components/parameters/FilterByFromDate"
+          "$ref" : "#/components/parameters/FilterByFromDateTimeParam"
         }, {
-          "$ref" : "#/components/parameters/FilterByToDate"
+          "$ref" : "#/components/parameters/FilterByToDateTimeParam"
         }, {
-          "$ref" : "#/components/parameters/FilterProcessingTransactionsMode"
+          "$ref" : "#/components/parameters/FilterProcessingTransactionsModeParam"
         }, {
           "$ref" : "#/components/parameters/FilterByVideoId"
         } ],
@@ -513,12 +516,12 @@
         }
       }
     },
-    "/v1/billing-periods/transactions" : {
+    "/v2/stripe/billing-periods/latest/transactions" : {
       "get" : {
-        "tags" : [ "billing" ],
-        "summary" : "Retrieve transactions for the latest billing period",
-        "description" : "Retrieves a paginated list of transactions for the selected team's latest billing period, sorted by date.",
-        "operationId" : "getTransactionsForLatestBillingPeriod",
+        "tags" : [ "stripe-billing" ],
+        "summary" : "Retrieve transactions for the latest Stripe billing period",
+        "description" : "Retrieves a paginated list of transactions for the selected team’s latest Stripe billing period, sorted by date. `FilterByFromDateTimeParam` defaults to the creation date of the team.",
+        "operationId" : "getStripeTransactionsForLatestBillingPeriod",
         "parameters" : [ {
           "$ref" : "#/components/parameters/SelectTeamId"
         }, {
@@ -528,11 +531,11 @@
         }, {
           "$ref" : "#/components/parameters/SortDirectionParam"
         }, {
-          "$ref" : "#/components/parameters/FilterByFromDate"
+          "$ref" : "#/components/parameters/FilterByFromDateTimeParam"
         }, {
-          "$ref" : "#/components/parameters/FilterByToDate"
+          "$ref" : "#/components/parameters/FilterByToDateTimeParam"
         }, {
-          "$ref" : "#/components/parameters/FilterProcessingTransactionsMode"
+          "$ref" : "#/components/parameters/FilterProcessingTransactionsModeParam"
         }, {
           "$ref" : "#/components/parameters/FilterByVideoId"
         } ],
@@ -540,6 +543,164 @@
           "200" : {
             "description" : "Successfully retrieved the paginated list of transactions for the latest billing period.",
             "$ref" : "#/components/responses/TransactionsPageResponse"
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/Forbidden"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "429" : {
+            "$ref" : "#/components/responses/TooManyRequests"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v2/aws-marketplace/subscriptions" : {
+      "get" : {
+        "tags" : [ "aws-marketplace-billing" ],
+        "summary" : "Retrieve paginated list of AWS Marketplace subscriptions",
+        "description" : "Retrieve paginated list of AWS Marketplace subscriptions associated with the provided API key.",
+        "operationId" : "getAwsMarketplaceSubscriptions",
+        "parameters" : [ {
+          "$ref" : "#/components/parameters/FilterByTeamId"
+        }, {
+          "$ref" : "#/components/parameters/PageNumberParam"
+        }, {
+          "$ref" : "#/components/parameters/PageSizeParam"
+        }, {
+          "$ref" : "#/components/parameters/SortDirectionParam"
+        }, {
+          "$ref" : "#/components/parameters/SortByBaseParam"
+        } ],
+        "responses" : {
+          "200" : {
+            "$ref" : "#/components/responses/AwsMarketplaceSubscriptionsPageResponse"
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/Forbidden"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "429" : {
+            "$ref" : "#/components/responses/TooManyRequests"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v2/aws-marketplace/subscriptions/{agreementId}" : {
+      "get" : {
+        "tags" : [ "aws-marketplace-billing" ],
+        "summary" : "Retrieve AWS Marketplace subscription details",
+        "description" : "Retrieves details for a single AWS Marketplace subscription identified by agreement ID.",
+        "operationId" : "getAwsMarketplaceSubscriptionByAgreementId",
+        "parameters" : [ {
+          "$ref" : "#/components/parameters/AgreementIdPathParam"
+        } ],
+        "responses" : {
+          "200" : {
+            "$ref" : "#/components/responses/AwsMarketplaceSubscriptionResponse"
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/Forbidden"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "429" : {
+            "$ref" : "#/components/responses/TooManyRequests"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v2/aws-marketplace/subscriptions/current" : {
+      "get" : {
+        "tags" : [ "aws-marketplace-billing" ],
+        "summary" : "Retrieve current AWS Marketplace subscription",
+        "description" : "Retrieves the current AWS Marketplace subscription linked to the selected team.",
+        "operationId" : "getCurrentAwsMarketplaceSubscription",
+        "parameters" : [ {
+          "$ref" : "#/components/parameters/SelectTeamId"
+        } ],
+        "responses" : {
+          "200" : {
+            "$ref" : "#/components/responses/AwsMarketplaceSubscriptionResponse"
+          },
+          "400" : {
+            "$ref" : "#/components/responses/BadRequest"
+          },
+          "401" : {
+            "$ref" : "#/components/responses/Unauthorized"
+          },
+          "403" : {
+            "$ref" : "#/components/responses/Forbidden"
+          },
+          "404" : {
+            "$ref" : "#/components/responses/NotFound"
+          },
+          "429" : {
+            "$ref" : "#/components/responses/TooManyRequests"
+          },
+          "500" : {
+            "$ref" : "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v2/aws-marketplace/credits-usage" : {
+      "get" : {
+        "tags" : [ "aws-marketplace-billing" ],
+        "summary" : "Retrieve AWS Marketplace Pixop Credits usage",
+        "description" : "Retrieves a paginated list of Pixop Credits usage records for the selected team. `FilterByFromDateTimeParam` defaults to the first date and time the team was linked to an AWS Marketplace agreement.",
+        "operationId" : "getAwsMarketplacePixopCreditsUsage",
+        "parameters" : [ {
+          "$ref" : "#/components/parameters/SelectTeamId"
+        }, {
+          "$ref" : "#/components/parameters/PageNumberParam"
+        }, {
+          "$ref" : "#/components/parameters/PageSizeParam"
+        }, {
+          "$ref" : "#/components/parameters/SortDirectionParam"
+        }, {
+          "$ref" : "#/components/parameters/FilterByFromDateTimeParam"
+        }, {
+          "$ref" : "#/components/parameters/FilterByToDateTimeParam"
+        }, {
+          "$ref" : "#/components/parameters/FilterProcessingCreditsUsageModeParam"
+        }, {
+          "$ref" : "#/components/parameters/FilterByVideoId"
+        } ],
+        "responses" : {
+          "200" : {
+            "$ref" : "#/components/responses/CreditsUsagePageResponse"
           },
           "400" : {
             "$ref" : "#/components/responses/BadRequest"
@@ -2993,12 +3154,10 @@
           }
         }
       },
-      "Products" : {
-        "type" : "array",
-        "description" : "The list of products associated with the transaction.",
-        "items" : {
-          "$ref" : "#/components/schemas/Product"
-        }
+      "CreditsUsageType" : {
+        "type" : "string",
+        "description" : "The type of the credits usage, representing specific categories of usage.\n- `PROCESSING`: Usage related to video processing.\n- `UTILITIES`: Usage related to utilities such as downloads or storage.\n",
+        "enum" : [ "PROCESSING", "UTILITIES" ]
       },
       "ProcessingTransaction" : {
         "description" : "A transaction related to video processing.",
@@ -3023,7 +3182,7 @@
           "properties" : {
             "product" : {
               "description" : "The product associated with the utilities transaction.",
-              "$ref" : "#/components/schemas/Product",
+              "$ref" : "#/components/schemas/ProductUsd",
               "readOnly" : true
             }
           }
@@ -3035,13 +3194,16 @@
         "properties" : {
           "sourceVideoId" : {
             "readOnly" : true,
-            "description" : "The ID of the video associated with the transaction.",
+            "description" : "The ID of the source video associated with the transaction.",
             "$ref" : "#/components/schemas/UUID"
           },
           "products" : {
             "readOnly" : true,
             "description" : "The list of products involved in the transaction.",
-            "$ref" : "#/components/schemas/Products"
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProductUsd"
+            }
           },
           "discountPercentage" : {
             "readOnly" : true,
@@ -3141,6 +3303,9 @@
               "type" : "boolean",
               "readOnly" : true,
               "examples" : [ true ]
+            },
+            "billingType" : {
+              "$ref" : "#/components/schemas/BillingType"
             }
           }
         } ]
@@ -3324,7 +3489,7 @@
       "ProcessingEstimation" : {
         "description" : "The estimation of the processing cost, including file size, storage cost, and compute time.",
         "type" : "object",
-        "required" : [ "fileSize", "storageCostUsd", "downloadCostUsd", "totalComputeTimeSeconds" ],
+        "required" : [ "fileSize", "totalComputeTimeSeconds" ],
         "properties" : {
           "fileSize" : {
             "description" : "The estimated size of the processed file in bytes. For example, 606323 bytes.",
@@ -3332,16 +3497,6 @@
             "format" : "int64",
             "readOnly" : true,
             "examples" : [ 606323 ]
-          },
-          "storageCostUsd" : {
-            "description" : "The estimated storage cost in USD.",
-            "$ref" : "#/components/schemas/Money",
-            "readOnly" : true
-          },
-          "downloadCostUsd" : {
-            "description" : "The estimated download cost in USD.",
-            "$ref" : "#/components/schemas/Money",
-            "readOnly" : true
           },
           "totalComputeTimeSeconds" : {
             "description" : "The estimated total compute time in seconds. For example, 38 seconds.",
@@ -3352,18 +3507,80 @@
           }
         }
       },
+      "VideoProcessingJobAppraisalCostUsd" : {
+        "description" : "The detailed USD cost breakdown for the video processing.",
+        "type" : "object",
+        "required" : [ "discountPercentage", "totalProcessingCostUsd", "totalProcessingDiscountUsd", "totalNormalProcessingCostUsd", "estimatedStorageCostUsd", "estimatedDownloadCostUsd" ],
+        "properties" : {
+          "discountPercentage" : {
+            "description" : "The discount percentage applied to the processing cost.",
+            "$ref" : "#/components/schemas/DiscountPercentage",
+            "readOnly" : true
+          },
+          "totalProcessingCostUsd" : {
+            "description" : "The total cost of the processing after discounts, in USD.",
+            "$ref" : "#/components/schemas/Money",
+            "readOnly" : true
+          },
+          "totalProcessingDiscountUsd" : {
+            "description" : "The total discount amount applied to the processing, in USD.",
+            "$ref" : "#/components/schemas/Money",
+            "readOnly" : true
+          },
+          "totalNormalProcessingCostUsd" : {
+            "description" : "The processing cost without any discounts, in USD.",
+            "$ref" : "#/components/schemas/Money",
+            "readOnly" : true
+          },
+          "estimatedStorageCostUsd" : {
+            "description" : "The estimated storage cost in USD.",
+            "$ref" : "#/components/schemas/Money",
+            "readOnly" : true
+          },
+          "estimatedDownloadCostUsd" : {
+            "description" : "The estimated download cost in USD.",
+            "$ref" : "#/components/schemas/Money",
+            "readOnly" : true
+          }
+        }
+      },
+      "VideoProcessingJobAppraisalCostPixopCredits" : {
+        "description" : "The detailed Pixop Credits cost breakdown for the video processing.",
+        "type" : "object",
+        "required" : [ "totalProcessingCostPixopCredits", "estimatedStorageCostPixopCredits", "estimatedDownloadCostPixopCredits" ],
+        "properties" : {
+          "totalProcessingCostPixopCredits" : {
+            "description" : "The total cost of the processing, in Pixop Credits.",
+            "$ref" : "#/components/schemas/PixopCredits",
+            "readOnly" : true
+          },
+          "estimatedStorageCostPixopCredits" : {
+            "description" : "The estimated storage cost in Pixop Credits.",
+            "$ref" : "#/components/schemas/PixopCredits",
+            "readOnly" : true
+          },
+          "estimatedDownloadCostPixopCredits" : {
+            "description" : "The estimated download cost in Pixop Credits.",
+            "$ref" : "#/components/schemas/PixopCredits",
+            "readOnly" : true
+          }
+        }
+      },
       "VideoProcessingJobAppraisal" : {
         "type" : "object",
         "description" : "An appraisal containing the estimated costs and job details for processing a video.",
-        "required" : [ "jobItems", "estimation", "outputDurationMillis", "cost" ],
+        "required" : [ "billingType", "estimation", "outputDurationMillis" ],
+        "discriminator" : {
+          "propertyName" : "billingType",
+          "mapping" : {
+            "STRIPE" : "#/components/schemas/VideoProcessingJobAppraisalUsd",
+            "AWS_MARKETPLACE" : "#/components/schemas/VideoProcessingJobAppraisalPixopCredits"
+          }
+        },
         "properties" : {
-          "jobItems" : {
-            "description" : "A list of job items to be processed as part of this video.",
-            "type" : "array",
-            "readOnly" : true,
-            "items" : {
-              "$ref" : "#/components/schemas/VideoProcessingJobItem"
-            }
+          "billingType" : {
+            "$ref" : "#/components/schemas/BillingType",
+            "readOnly" : true
           },
           "estimation" : {
             "description" : "The overall estimation of costs and processing metrics for the job.",
@@ -3376,50 +3593,67 @@
             "format" : "int64",
             "readOnly" : true,
             "examples" : [ 30000 ]
-          },
-          "cost" : {
-            "description" : "The detailed cost breakdown for the video processing.",
-            "type" : "object",
-            "required" : [ "discountPercentage", "totalProcessingCostUsd", "totalProcessingDiscountUsd", "totalNormalProcessingCostUsd" ],
-            "properties" : {
-              "discountPercentage" : {
-                "description" : "The discount percentage applied to the processing cost.",
-                "$ref" : "#/components/schemas/DiscountPercentage",
-                "readOnly" : true
-              },
-              "totalProcessingCostUsd" : {
-                "description" : "The total cost of the processing after discounts, in USD.",
-                "$ref" : "#/components/schemas/Money",
-                "readOnly" : true
-              },
-              "totalProcessingDiscountUsd" : {
-                "description" : "The total discount amount applied to the processing, in USD.",
-                "$ref" : "#/components/schemas/Money",
-                "readOnly" : true
-              },
-              "totalNormalProcessingCostUsd" : {
-                "description" : "The processing cost without any discounts, in USD.",
-                "$ref" : "#/components/schemas/Money",
-                "readOnly" : true
-              }
-            }
           }
         }
       },
+      "VideoProcessingJobAppraisalUsd" : {
+        "description" : "An appraisal containing the estimated USD costs and job details for processing a video.",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/VideoProcessingJobAppraisal"
+        }, {
+          "type" : "object",
+          "required" : [ "jobItems", "cost" ],
+          "properties" : {
+            "jobItems" : {
+              "description" : "A list of job items to be processed as part of this video.",
+              "type" : "array",
+              "readOnly" : true,
+              "items" : {
+                "$ref" : "#/components/schemas/VideoProcessingJobItemUsd"
+              }
+            },
+            "cost" : {
+              "$ref" : "#/components/schemas/VideoProcessingJobAppraisalCostUsd"
+            }
+          }
+        } ]
+      },
+      "VideoProcessingJobAppraisalPixopCredits" : {
+        "description" : "An appraisal containing the Pixop Credits costs and job details for processing a video.",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/VideoProcessingJobAppraisal"
+        }, {
+          "type" : "object",
+          "required" : [ "jobItems", "cost" ],
+          "properties" : {
+            "jobItems" : {
+              "description" : "A list of job items to be processed as part of this video.",
+              "type" : "array",
+              "readOnly" : true,
+              "items" : {
+                "$ref" : "#/components/schemas/VideoProcessingJobItemPixopCredits"
+              }
+            },
+            "cost" : {
+              "$ref" : "#/components/schemas/VideoProcessingJobAppraisalCostPixopCredits"
+            }
+          }
+        } ]
+      },
       "AmountUnit" : {
         "type" : "string",
-        "description" : "The unit of measurement for an amount. Common units include USD (US dollars), GB (gigabytes), and GP (gigapixels).",
-        "enum" : [ "USD", "GB", "GP" ]
+        "description" : "The unit of measurement for an amount. Common units include GB (gigabytes), and GP (gigapixels).",
+        "enum" : [ "GB", "GP" ]
       },
       "Category" : {
         "type" : "string",
-        "description" : "The category of a product or account adjustment, indicating its type or purpose.",
+        "description" : "The category of a product, indicating its type or purpose.",
         "enum" : [ "ENCODER", "FILTER", "PROCESSING", "STORAGE", "DOWNLOAD_S3", "DOWNLOAD_CLOUDFRONT", "OTHER" ]
       },
       "Product" : {
         "type" : "object",
-        "description" : "Represents a product associated with a transaction or video processing. Includes pricing and discount details.",
-        "required" : [ "productName", "category", "amount", "amountUnit", "discountPercentage", "unitPriceUsd", "costUsd" ],
+        "description" : "Base information about a product, including details about the product and its quantity.",
+        "required" : [ "productName", "category", "amount", "amountUnit" ],
         "properties" : {
           "productName" : {
             "type" : "string",
@@ -3440,31 +3674,64 @@
           },
           "amountUnit" : {
             "$ref" : "#/components/schemas/AmountUnit",
-            "description" : "The unit for the specified amount, such as USD, GB, or GP.",
             "readOnly" : true
-          },
-          "discountPercentage" : {
-            "$ref" : "#/components/schemas/DiscountPercentage",
-            "description" : "The percentage discount applied to the product, if applicable.",
-            "readOnly" : true
-          },
-          "unitPriceUsd" : {
-            "$ref" : "#/components/schemas/Money",
-            "description" : "The price of one unit of the product in USD.",
-            "readOnly" : true,
-            "examples" : [ 0.05 ]
-          },
-          "costUsd" : {
-            "$ref" : "#/components/schemas/Money",
-            "description" : "The total cost of the product after applying any discounts, in USD.",
-            "readOnly" : true,
-            "examples" : [ 0.1 ]
           }
         }
       },
-      "VideoProcessingJobItem" : {
+      "ProductUsd" : {
+        "description" : "Represents a product associated with a transaction or video processing. Includes pricing and discount details in USD.",
         "allOf" : [ {
           "$ref" : "#/components/schemas/Product"
+        }, {
+          "type" : "object",
+          "required" : [ "discountPercentage", "unitPriceUsd", "costUsd" ],
+          "properties" : {
+            "discountPercentage" : {
+              "$ref" : "#/components/schemas/DiscountPercentage",
+              "description" : "The percentage discount applied to the product, if applicable.",
+              "readOnly" : true
+            },
+            "unitPriceUsd" : {
+              "$ref" : "#/components/schemas/Money",
+              "description" : "The price of one unit of the product in USD.",
+              "readOnly" : true,
+              "examples" : [ 0.05 ]
+            },
+            "costUsd" : {
+              "$ref" : "#/components/schemas/Money",
+              "description" : "The total cost of the product after applying any discounts, in USD.",
+              "readOnly" : true,
+              "examples" : [ 0.1 ]
+            }
+          }
+        } ]
+      },
+      "ProductPixopCredits" : {
+        "description" : "Represents a product associated with a Pixop Credits usage.",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Product"
+        }, {
+          "type" : "object",
+          "required" : [ "unitPricePixopCredits", "costPixopCredits" ],
+          "properties" : {
+            "unitPricePixopCredits" : {
+              "$ref" : "#/components/schemas/PixopCredits",
+              "description" : "The price of one unit of the product in Pixop Credits.",
+              "readOnly" : true,
+              "examples" : [ 5 ]
+            },
+            "costPixopCredits" : {
+              "$ref" : "#/components/schemas/PixopCredits",
+              "description" : "The total cost of the product in Pixop Credits.",
+              "readOnly" : true,
+              "examples" : [ 10 ]
+            }
+          }
+        } ]
+      },
+      "VideoProcessingJobItemUsd" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ProductUsd"
         }, {
           "type" : "object",
           "description" : "A specific job item involved in video processing, with additional cost and discount details.",
@@ -3485,6 +3752,23 @@
           }
         } ]
       },
+      "VideoProcessingJobItemPixopCredits" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ProductPixopCredits"
+        }, {
+          "type" : "object",
+          "description" : "A specific job item involved in video processing, with its Pixop Credits cost details.",
+          "required" : [ "costPixopCredits" ],
+          "properties" : {
+            "costPixopCredits" : {
+              "$ref" : "#/components/schemas/PixopCredits",
+              "description" : "The cost of the job item in Pixop Credits.",
+              "readOnly" : true,
+              "examples" : [ 120 ]
+            }
+          }
+        } ]
+      },
       "Money" : {
         "type" : "number",
         "description" : "Represents an amount of money with up to three decimal places, e.g., 1.341 USD.",
@@ -3497,6 +3781,320 @@
         "minimum" : 0,
         "maximum" : 100,
         "examples" : [ 3.3 ]
+      },
+      "PixopCredits" : {
+        "type" : "integer",
+        "format" : "int64",
+        "description" : "Represents an amount in Pixop Credits, which is the internal unit used for billing in AWS Marketplace. \nSee [AWS Marketplace billing guide](https://docs.pixop.com/reference/aws-marketplace-billing-guide) for more details.\n",
+        "examples" : [ 150 ]
+      },
+      "AwsMarketplaceAgreementId" : {
+        "type" : "string",
+        "description" : "AWS Marketplace agreement identifier.",
+        "examples" : [ "agmt-12gatyyua6bsh8zxh4t5cy6ne" ]
+      },
+      "AwsMarketplaceOfferId" : {
+        "type" : "string",
+        "description" : "AWS Marketplace offer identifier.",
+        "examples" : [ "offer-3n4pb5gvmarj6" ]
+      },
+      "AwsMarketplaceLicenseArn" : {
+        "type" : "string",
+        "description" : "AWS Marketplace License Manager license ARN.",
+        "examples" : [ "arn:aws:license-manager::294406891311:license:l-0eaf47552bd544f09b452de373131d2a" ]
+      },
+      "AwsAccountId" : {
+        "type" : "string",
+        "examples" : [ "123456789987" ]
+      },
+      "BillingType" : {
+        "type" : "string",
+        "description" : "The billing type for the team.",
+        "enum" : [ "STRIPE", "AWS_MARKETPLACE" ]
+      },
+      "AwsMarketplaceSubscriptionStatus" : {
+        "type" : "string",
+        "description" : "AWS Marketplace subscription status.",
+        "enum" : [ "SUBSCRIBED", "UNSUBSCRIBE_PENDING", "UNSUBSCRIBED" ]
+      },
+      "AwsMarketplaceSubscription" : {
+        "type" : "object",
+        "description" : "AWS Marketplace subscription details.",
+        "required" : [ "agreementId", "createdAt", "updatedAt", "teamId", "status", "licenseArn", "offerId", "productId", "productName", "buyerAwsAccountId", "sellerAwsAccountId", "acceptanceTime", "startTime", "setupCompletedAt", "effectiveFromHour" ],
+        "properties" : {
+          "agreementId" : {
+            "$ref" : "#/components/schemas/AwsMarketplaceAgreementId",
+            "readOnly" : true
+          },
+          "createdAt" : {
+            "description" : "Date and time when the object was created.",
+            "type" : "string",
+            "format" : "date-time",
+            "readOnly" : true,
+            "examples" : [ 1734520108148 ]
+          },
+          "updatedAt" : {
+            "description" : "Date and time when the object was last updated.",
+            "type" : "string",
+            "format" : "date-time",
+            "readOnly" : true,
+            "examples" : [ 1734520708148 ]
+          },
+          "teamId" : {
+            "description" : "The ID of the team associated with the subscription.",
+            "$ref" : "#/components/schemas/UUID",
+            "readOnly" : true
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/AwsMarketplaceSubscriptionStatus",
+            "readOnly" : true
+          },
+          "licenseArn" : {
+            "$ref" : "#/components/schemas/AwsMarketplaceLicenseArn",
+            "readOnly" : true
+          },
+          "offerId" : {
+            "$ref" : "#/components/schemas/AwsMarketplaceOfferId",
+            "readOnly" : true
+          },
+          "productId" : {
+            "type" : "string",
+            "readOnly" : true,
+            "description" : "AWS Marketplace product identifier."
+          },
+          "productName" : {
+            "type" : "string",
+            "readOnly" : true,
+            "description" : "AWS Marketplace product name."
+          },
+          "buyerAwsAccountId" : {
+            "$ref" : "#/components/schemas/AwsAccountId",
+            "readOnly" : true,
+            "description" : "AWS account ID of the buyer."
+          },
+          "sellerAwsAccountId" : {
+            "$ref" : "#/components/schemas/AwsAccountId",
+            "readOnly" : true,
+            "description" : "AWS account ID of the seller."
+          },
+          "acceptanceTime" : {
+            "type" : "string",
+            "format" : "date-time",
+            "readOnly" : true,
+            "description" : "The date and time when the agreement was accepted."
+          },
+          "startTime" : {
+            "type" : "string",
+            "format" : "date-time",
+            "readOnly" : true,
+            "description" : "The date and time when the subscription started."
+          },
+          "setupCompletedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "readOnly" : true,
+            "description" : "The date and time when the subscription was linked to a team and the setup process completed."
+          },
+          "cancellationRequestedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "readOnly" : true,
+            "description" : "The date and time when the cancellation request was made."
+          },
+          "licenseDeprovisionedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "readOnly" : true,
+            "description" : "The date and time when the license was deprovisioned."
+          },
+          "effectiveFromHour" : {
+            "type" : "string",
+            "format" : "date-time",
+            "readOnly" : true,
+            "description" : "The date and hour from which this agreement is used for metering."
+          },
+          "replacesAgreementId" : {
+            "$ref" : "#/components/schemas/AwsMarketplaceAgreementId",
+            "readOnly" : true,
+            "description" : "The ID of previous agreement replaced by this agreement, if any."
+          }
+        }
+      },
+      "AwsMarketplaceSubscriptionsPage" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Page"
+        }, {
+          "type" : "object",
+          "required" : [ "items" ],
+          "properties" : {
+            "items" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/AwsMarketplaceSubscription"
+              }
+            }
+          }
+        } ]
+      },
+      "CreditsUsage" : {
+        "type" : "object",
+        "description" : "Base Pixop Credits usage details.",
+        "required" : [ "createdAt", "type", "pixopCredits" ],
+        "discriminator" : {
+          "propertyName" : "type",
+          "mapping" : {
+            "PROCESSING" : "#/components/schemas/ProcessingCreditsUsage",
+            "UTILITIES" : "#/components/schemas/UtilitiesCreditsUsage"
+          }
+        },
+        "properties" : {
+          "createdAt" : {
+            "description" : "The date and time when the usage record was created.",
+            "type" : "string",
+            "format" : "date-time",
+            "examples" : [ 1734520108000 ]
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/CreditsUsageType"
+          },
+          "pixopCredits" : {
+            "description" : "The usage amount in Pixop Credits.",
+            "$ref" : "#/components/schemas/PixopCredits"
+          },
+          "videoId" : {
+            "description" : "The ID of the video associated with the usage.",
+            "$ref" : "#/components/schemas/UUID"
+          }
+        }
+      },
+      "ProcessingCreditsUsage" : {
+        "description" : "Pixop Credits usage related to video processing.",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/CreditsUsage"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "details" : {
+              "$ref" : "#/components/schemas/ProcessingCreditsUsageDetails",
+              "readOnly" : true
+            }
+          }
+        } ]
+      },
+      "UtilitiesCreditsUsage" : {
+        "description" : "Pixop Credits usage related to utilities, such as downloads or storage.",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/CreditsUsage"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "product" : {
+              "description" : "The product associated with the utilities usage.",
+              "$ref" : "#/components/schemas/ProductPixopCredits",
+              "readOnly" : true
+            }
+          }
+        } ]
+      },
+      "ProcessingCreditsUsageDetails" : {
+        "type" : "object",
+        "description" : "Additional details specific to a processing credits usage.",
+        "properties" : {
+          "sourceVideoId" : {
+            "readOnly" : true,
+            "description" : "The ID of the source video associated with the credits usage.",
+            "$ref" : "#/components/schemas/UUID"
+          },
+          "products" : {
+            "readOnly" : true,
+            "description" : "The list of products involved in the usage.",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProductPixopCredits"
+            }
+          }
+        }
+      },
+      "CreditsUsageTotals" : {
+        "type" : "object",
+        "description" : "A summary of Pixop Credits usage totals categorized by type, including overall totals.",
+        "properties" : {
+          "totalsForAllCategories" : {
+            "description" : "The aggregate usage totals for all categories.",
+            "$ref" : "#/components/schemas/CreditsUsageTotalsByCategory",
+            "readOnly" : true
+          },
+          "totalsByCategory" : {
+            "description" : "The list of usage totals grouped by category.",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CreditsUsageTotalsByCategory"
+            },
+            "readOnly" : true
+          }
+        }
+      },
+      "CreditsUsageTotalsByCategory" : {
+        "type" : "object",
+        "description" : "A breakdown of usage totals for a specific category.",
+        "properties" : {
+          "category" : {
+            "description" : "The category of the credits usages being summed.",
+            "$ref" : "#/components/schemas/Category",
+            "readOnly" : true
+          },
+          "totalPixopCredits" : {
+            "description" : "The total Pixop Credit usage.",
+            "$ref" : "#/components/schemas/PixopCredits",
+            "readOnly" : true,
+            "examples" : [ 500 ]
+          }
+        }
+      },
+      "CreditsUsagePage" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Page"
+        }, {
+          "type" : "object",
+          "required" : [ "teamId", "filterByFromDateTime", "filterByToDateTime", "filterProcessingCreditsUsageMode", "totals", "items" ],
+          "properties" : {
+            "teamId" : {
+              "description" : "The ID of the team for which to retrieve credits usage records.",
+              "$ref" : "#/components/schemas/UUID",
+              "readOnly" : true
+            },
+            "filterByFromDateTime" : {
+              "$ref" : "#/components/schemas/FilterByFromDateTime",
+              "readOnly" : true
+            },
+            "filterByToDateTime" : {
+              "$ref" : "#/components/schemas/FilterByToDateTime",
+              "readOnly" : true
+            },
+            "filterProcessingCreditsUsageMode" : {
+              "description" : "Filter the credits usage records by processing credits usage mode.",
+              "$ref" : "#/components/schemas/FilterProcessingCreditsUsageMode",
+              "readOnly" : true
+            },
+            "filterByVideoId" : {
+              "description" : "By which video ID the credits usage records were filtered.",
+              "$ref" : "#/components/schemas/UUID",
+              "readOnly" : true
+            },
+            "totals" : {
+              "description" : "The aggregated totals for the filtered credits usage records on all pages.",
+              "$ref" : "#/components/schemas/CreditsUsageTotals"
+            },
+            "items" : {
+              "type" : "array",
+              "description" : "The list of credits usage records on the current page.",
+              "readOnly" : true,
+              "items" : {
+                "$ref" : "#/components/schemas/CreditsUsage"
+              }
+            }
+          }
+        } ]
       },
       "ApiKeyActive" : {
         "type" : "boolean",
@@ -5462,7 +6060,7 @@
       "ErrorCodeEnum" : {
         "type" : "string",
         "description" : "Enumerates the known error codes returned by the API.\nNot all possible codes are listed here, and additional codes may be introduced in the future.\nWhen present, these values correspond to well-defined application or HTTP errors.\n",
-        "enum" : [ "UNKNOWN", "TOO_MANY_REQUESTS", "INVALID_CREDENTIALS", "ACCOUNT_LOCKED", "ACCOUNT_DISABLED", "ACCOUNT_EXPIRED", "MISSING_API_KEY", "INVALID_API_KEY", "ACCESS_DENIED", "RESOURCE_NOT_FOUND", "TEAM_NOT_FOUND", "DEFAULT_TEAM_NOT_API_ENABLED", "INVALID_INPUT", "FORBIDDEN", "VALIDATION_ERROR", "WEBHOOK_NOT_ACTIVE", "TOO_MANY_WEBHOOK_TEST_EVENTS", "CONTAINER_IS_NOT_SUPPORTED_FOR_SELECTED_CODEC", "INSUFFICIENT_PROJECTED_BALANCE_ERROR", "PROJECT_WITH_VIDEOS_CANNOT_BE_DELETED", "ACTIVE_API_KEY_CANNOT_BE_DELETED", "VIDEO_IN_OPERATION_NOT_FAILED", "VIDEO_OUT_OPERATION_NOT_FAILED", "VIDEO_ALREADY_BEING_COPIED_TO_OUTPUT_LOCATION", "ONGOING_COPY_TO_OUTPUT_NEEDS_TO_BE_RESTARTED_OR_ABANDONED", "BUCKET_NOT_FOUND", "KEY_NOT_FOUND", "HEAD_BUCKET_ERROR", "HEAD_OBJECT_ERROR", "RESOLVE_OBJECT_METADATA_ERROR", "CONTENT_RANGE_HEADER_INVALID", "CONTENT_NOT_PARTIAL_ERROR", "PARSE_CONTENT_TYPE_ERROR", "NO_CONTENT", "OBJECT_ALREADY_EXISTS", "CONFLICTING_DERIVED_VIDEO_IDS", "MAXIMUM_AMOUNT_OF_ACTIVE_API_KEYS_REACHED", "MAXIMUM_AMOUNT_OF_ACTIVE_WEBHOOKS_REACHED", "INVALID_REQUEST_BODY", "MISSING_REQUEST_BODY", "TARGET_RESOLUTION_OUT_OF_ALLOWED_RANGE", "TARGET_RESOLUTION_CANNOT_BE_LOWER_THAN_CALCULATED_ASPECT_RATIO_RESOLUTION", "INVALID_START_POSITION", "INVALID_END_POSITION", "MISSING_CUSTOM_RESOLUTION", "INVALID_INPUT_COLOR_CONVERSION", "INVALID_OUTPUT_COLOR_CONVERSION", "UNSUPPORTED_CONTENT_TYPE", "CHECKSUM_MISMATCH", "VIDEO_IN_RESTART_CHECKSUM_MISMATCH", "INVALID_HTTPS_URL", "UNEXPECTED_CONTENT_RANGE", "VIDEO_PROCESSING_NOT_DONE", "WEBHOOK_RATE_LIMIT_EXCEEDED", "VIDEO_NOT_FULLY_INGESTED", "VIDEO_COMPARISON_CONFLICT", "BAD_REQUEST", "UNAUTHORIZED", "NOT_FOUND", "CONFLICT", "INTERNAL_SERVER_ERROR" ],
+        "enum" : [ "UNKNOWN", "TOO_MANY_REQUESTS", "INVALID_CREDENTIALS", "ACCOUNT_LOCKED", "ACCOUNT_DISABLED", "ACCOUNT_EXPIRED", "MISSING_API_KEY", "INVALID_API_KEY", "ACCESS_DENIED", "RESOURCE_NOT_FOUND", "TEAM_NOT_FOUND", "DEFAULT_TEAM_NOT_API_ENABLED", "INVALID_INPUT", "FORBIDDEN", "VALIDATION_ERROR", "WEBHOOK_NOT_ACTIVE", "TOO_MANY_WEBHOOK_TEST_EVENTS", "CONTAINER_IS_NOT_SUPPORTED_FOR_SELECTED_CODEC", "INSUFFICIENT_PROJECTED_BALANCE_ERROR", "PROJECT_WITH_VIDEOS_CANNOT_BE_DELETED", "ACTIVE_API_KEY_CANNOT_BE_DELETED", "VIDEO_IN_OPERATION_NOT_FAILED", "VIDEO_OUT_OPERATION_NOT_FAILED", "VIDEO_ALREADY_BEING_COPIED_TO_OUTPUT_LOCATION", "ONGOING_COPY_TO_OUTPUT_NEEDS_TO_BE_RESTARTED_OR_ABANDONED", "BUCKET_NOT_FOUND", "KEY_NOT_FOUND", "HEAD_BUCKET_ERROR", "HEAD_OBJECT_ERROR", "RESOLVE_OBJECT_METADATA_ERROR", "CONTENT_RANGE_HEADER_INVALID", "CONTENT_NOT_PARTIAL_ERROR", "PARSE_CONTENT_TYPE_ERROR", "NO_CONTENT", "OBJECT_ALREADY_EXISTS", "CONFLICTING_DERIVED_VIDEO_IDS", "MAXIMUM_AMOUNT_OF_ACTIVE_API_KEYS_REACHED", "MAXIMUM_AMOUNT_OF_ACTIVE_WEBHOOKS_REACHED", "INVALID_REQUEST_BODY", "MISSING_REQUEST_BODY", "TARGET_RESOLUTION_OUT_OF_ALLOWED_RANGE", "TARGET_RESOLUTION_CANNOT_BE_LOWER_THAN_CALCULATED_ASPECT_RATIO_RESOLUTION", "INVALID_START_POSITION", "INVALID_END_POSITION", "INVALID_DATE_TIME_RANGE", "MISSING_CUSTOM_RESOLUTION", "INVALID_INPUT_COLOR_CONVERSION", "INVALID_OUTPUT_COLOR_CONVERSION", "UNSUPPORTED_CONTENT_TYPE", "CHECKSUM_MISMATCH", "VIDEO_IN_RESTART_CHECKSUM_MISMATCH", "INVALID_HTTPS_URL", "UNEXPECTED_CONTENT_RANGE", "VIDEO_PROCESSING_NOT_DONE", "WEBHOOK_RATE_LIMIT_EXCEEDED", "VIDEO_NOT_FULLY_INGESTED", "VIDEO_COMPARISON_CONFLICT", "APPRAISAL_BILLING_OUT_DATED", "AWS_MARKETPLACE_ACCESS_NOT_AVAILABLE", "TEAM_NOT_BILLED_THROUGH_AWS_MARKETPLACE", "BAD_REQUEST", "UNAUTHORIZED", "NOT_FOUND", "CONFLICT", "INTERNAL_SERVER_ERROR" ],
         "x-enumDescriptions" : {
           "UNKNOWN" : "Unknown error",
           "TOO_MANY_REQUESTS" : "Too many requests",
@@ -5508,6 +6106,7 @@
           "TARGET_RESOLUTION_CANNOT_BE_LOWER_THAN_CALCULATED_ASPECT_RATIO_RESOLUTION" : "Target resolution cannot be lower than calculated aspect ratio resolution",
           "INVALID_START_POSITION" : "Invalid start position",
           "INVALID_END_POSITION" : "Invalid end position",
+          "INVALID_DATE_TIME_RANGE" : "Invalid date time range",
           "MISSING_CUSTOM_RESOLUTION" : "Width and height must be provided when tag and aspectRatioTag are not",
           "INVALID_INPUT_COLOR_CONVERSION" : "Invalid input color conversion",
           "INVALID_OUTPUT_COLOR_CONVERSION" : "Invalid output color conversion",
@@ -5520,6 +6119,9 @@
           "WEBHOOK_RATE_LIMIT_EXCEEDED" : "Webhook rate limit exceeded",
           "VIDEO_NOT_FULLY_INGESTED" : "Video not fully ingested",
           "VIDEO_COMPARISON_CONFLICT" : "Video comparison conflict.",
+          "APPRAISAL_BILLING_OUT_DATED" : "Appraisal billing out of date.",
+          "AWS_MARKETPLACE_ACCESS_NOT_AVAILABLE" : "AWS Marketplace access not available.",
+          "TEAM_NOT_BILLED_THROUGH_AWS_MARKETPLACE" : "Team not billed through AWS Marketplace.",
           "BAD_REQUEST" : "Standard HTTP 400 Bad Request",
           "UNAUTHORIZED" : "Standard HTTP 401 Unauthorized",
           "NOT_FOUND" : "Standard HTTP 404 Not Found",
@@ -5656,19 +6258,39 @@
         }, {
           "type" : "object",
           "description" : "Represents a paginated list of transactions, including associated billing period details and aggregated totals.",
-          "required" : [ "totals", "billingPeriod", "items" ],
+          "required" : [ "billingPeriod", "filterByFromDateTime", "filterByToDateTime", "filterProcessingTransactionsMode", "totals", "items" ],
           "properties" : {
             "billingPeriod" : {
-              "description" : "The billing period associated with the transactions on this page.",
-              "$ref" : "#/components/schemas/BillingPeriod"
+              "description" : "The billing period associated with the transactions.",
+              "$ref" : "#/components/schemas/BillingPeriod",
+              "readOnly" : true
+            },
+            "filterByFromDateTime" : {
+              "$ref" : "#/components/schemas/FilterByFromDateTime",
+              "readOnly" : true
+            },
+            "filterByToDateTime" : {
+              "$ref" : "#/components/schemas/FilterByToDateTime",
+              "readOnly" : true
+            },
+            "filterProcessingTransactionsMode" : {
+              "$ref" : "#/components/schemas/FilterProcessingTransactionsMode",
+              "readOnly" : true
+            },
+            "filterByVideoId" : {
+              "description" : "The video ID used to filter transactions, if any.",
+              "$ref" : "#/components/schemas/UUID",
+              "readOnly" : true
             },
             "totals" : {
-              "description" : "Aggregated totals for all transactions within the billing period.",
-              "$ref" : "#/components/schemas/TransactionTotals"
+              "description" : "Aggregated totals for all filtered transactions within the billing period.",
+              "$ref" : "#/components/schemas/TransactionTotals",
+              "readOnly" : true
             },
             "items" : {
               "type" : "array",
-              "description" : "The list of transactions included on the current page.",
+              "description" : "The list of filtered transactions included on the current page.",
+              "readOnly" : true,
               "items" : {
                 "$ref" : "#/components/schemas/Transaction"
               }
@@ -5897,6 +6519,24 @@
         "enum" : [ "INCLUDE", "EXCLUDE", "ONLY" ],
         "default" : "INCLUDE"
       },
+      "FilterByFromDateTime" : {
+        "description" : "Includes only items created at or after the specified date-time.",
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "FilterByToDateTime" : {
+        "description" : "Includes only items created at or before the specified date-time.",
+        "type" : "string",
+        "format" : "date-time"
+      },
+      "FilterProcessingTransactionsMode" : {
+        "description" : "Filters results based on the processing transactions mode:\n- `INCLUDE`: Includes processing transactions in the result / Returns all transaction types in the result.\n- `EXCLUDE`: Excludes processing transactions from the result / Only returns utilities transactions in the result.\n- `ONLY`: Only returns processing transactions in the result.\n",
+        "$ref" : "#/components/schemas/FilterModeEnum"
+      },
+      "FilterProcessingCreditsUsageMode" : {
+        "description" : "Filters results based on the processing credits usage mode:\n- `INCLUDE`: Includes processing credits usage in the result / Returns all credits usage types in the result.\n- `EXCLUDE`: Excludes processing credits usage from the result / Only returns utilities credits usage in the result.\n- `ONLY`: Only returns processing credits usage in the result.\n",
+        "$ref" : "#/components/schemas/FilterModeEnum"
+      },
       "HttpsURL" : {
         "description" : "A URL that must use HTTPS and point to a publicly reachable address. Only port 443 is allowed for HTTPS URLs.\nThe following addresses are not allowed:\n- Loopback (e.g., 127.x.x.x, ::1)\n- Site-local (RFC1918) addresses (e.g., 10.x.x.x, 192.168.x.x, 172.16–31.x.x, IPv6 unique-local)\n- Link-local addresses (e.g., 169.254.x.x, fe80::/10)\n- Multicast addresses (e.g., 224.0.0.0–239.255.255.255, ff00::/8)\n\nThe server will parse the URL, resolve its host, and reject any internal or non-public address.\n",
         "type" : "string",
@@ -6067,7 +6707,7 @@
       "FilterByFromDate" : {
         "name" : "fromDate",
         "in" : "query",
-        "description" : "Filters results by creation date. Includes only items created at or after the specified date. Defaults to the creation date of the team.",
+        "description" : "Filters results by creation date. Includes only items created at or after the specified date. Defaults to the creation date of the team.\nProviding a value greater than the `FilterByToDate` value results in a `400 Bad Request` response.\n",
         "required" : false,
         "schema" : {
           "type" : "string",
@@ -6077,7 +6717,7 @@
       "FilterByToDate" : {
         "name" : "toDate",
         "in" : "query",
-        "description" : "Filters results by creation date. Includes only items created at or before the specified date. Defaults to the current date.",
+        "description" : "Filters results by creation date. Includes only items created at or before the specified date. Defaults to the current date.\nProviding a value smaller than the `FilterByFromDate` value results in a `400 Bad Request` response.\n",
         "required" : false,
         "schema" : {
           "type" : "string",
@@ -6093,13 +6733,22 @@
           "$ref" : "#/components/schemas/FilterModeEnum"
         }
       },
-      "FilterProcessingTransactionsMode" : {
+      "FilterProcessingTransactionsModeParam" : {
         "name" : "processingTransactionsMode",
         "in" : "query",
-        "description" : "Filters results based on the processing transactions mode:\n- `INCLUDE`: Includes processing transactions in the result.\n- `EXCLUDE`: Excludes processing transactions from the result.\n- `ONLY`: Only returns processing transactions in the result.\n",
+        "description" : "Filters results based on the processing transactions mode:\n- `INCLUDE`: Includes processing transactions in the result / Returns all transaction types in the result.\n- `EXCLUDE`: Excludes processing transactions from the result / Only returns utilities transactions in the result.\n- `ONLY`: Only returns processing transactions in the result.\n",
         "required" : false,
         "schema" : {
-          "$ref" : "#/components/schemas/FilterModeEnum"
+          "$ref" : "#/components/schemas/FilterProcessingTransactionsMode"
+        }
+      },
+      "FilterProcessingCreditsUsageModeParam" : {
+        "name" : "processingCreditsUsageMode",
+        "in" : "query",
+        "description" : "Filters results based on the processing credits usage mode:\n- `INCLUDE`: Includes processing credits usage in the result / Returns all credits usage types in the result.\n- `EXCLUDE`: Excludes processing credits usage from the result / Only returns utilities credits usage in the result.\n- `ONLY`: Only returns processing credits usage in the result.\n",
+        "required" : false,
+        "schema" : {
+          "$ref" : "#/components/schemas/FilterProcessingCreditsUsageMode"
         }
       },
       "FilterByVideoId" : {
@@ -6265,6 +6914,33 @@
         "required" : false,
         "schema" : {
           "$ref" : "#/components/schemas/SortDirectionEnum"
+        }
+      },
+      "AgreementIdPathParam" : {
+        "name" : "agreementId",
+        "in" : "path",
+        "required" : true,
+        "description" : "The AWS Marketplace agreement ID.",
+        "schema" : {
+          "$ref" : "#/components/schemas/AwsMarketplaceAgreementId"
+        }
+      },
+      "FilterByFromDateTimeParam" : {
+        "name" : "fromDateTime",
+        "in" : "query",
+        "required" : false,
+        "description" : "Filters results by creation date. Includes only items created at or after the specified date and time.\nProviding a value greater than the resolved `FilterByToDateTimeParam` results in a `400 Bad Request` response.\n",
+        "schema" : {
+          "$ref" : "#/components/schemas/FilterByFromDateTime"
+        }
+      },
+      "FilterByToDateTimeParam" : {
+        "name" : "toDateTime",
+        "in" : "query",
+        "required" : false,
+        "description" : "Filters results by creation date. Includes only items created at or before the specified date and time.\nDefaults to the current date and time.\nProviding a value smaller than the resolved `FilterByFromDateTimeParam` results in a `400 Bad Request` response.\n",
+        "schema" : {
+          "$ref" : "#/components/schemas/FilterByToDateTime"
         }
       }
     },
@@ -6745,6 +7421,69 @@
           "application/json" : {
             "schema" : {
               "$ref" : "#/components/schemas/TransactionsPage"
+            }
+          }
+        },
+        "headers" : {
+          "X-RateLimit-Limit" : {
+            "$ref" : "#/components/headers/X-RateLimit-Limit"
+          },
+          "X-RateLimit-Remaining" : {
+            "$ref" : "#/components/headers/X-RateLimit-Remaining"
+          },
+          "X-RateLimit-Reset" : {
+            "$ref" : "#/components/headers/X-RateLimit-Reset"
+          }
+        }
+      },
+      "AwsMarketplaceSubscriptionResponse" : {
+        "description" : "Successfully retrieved AWS Marketplace subscription details.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/AwsMarketplaceSubscription"
+            }
+          }
+        },
+        "headers" : {
+          "X-RateLimit-Limit" : {
+            "$ref" : "#/components/headers/X-RateLimit-Limit"
+          },
+          "X-RateLimit-Remaining" : {
+            "$ref" : "#/components/headers/X-RateLimit-Remaining"
+          },
+          "X-RateLimit-Reset" : {
+            "$ref" : "#/components/headers/X-RateLimit-Reset"
+          }
+        }
+      },
+      "AwsMarketplaceSubscriptionsPageResponse" : {
+        "description" : "Successfully retrieved the paginated list of AWS Marketplace subscriptions.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/AwsMarketplaceSubscriptionsPage"
+            }
+          }
+        },
+        "headers" : {
+          "X-RateLimit-Limit" : {
+            "$ref" : "#/components/headers/X-RateLimit-Limit"
+          },
+          "X-RateLimit-Remaining" : {
+            "$ref" : "#/components/headers/X-RateLimit-Remaining"
+          },
+          "X-RateLimit-Reset" : {
+            "$ref" : "#/components/headers/X-RateLimit-Reset"
+          }
+        }
+      },
+      "CreditsUsagePageResponse" : {
+        "description" : "Successfully retrieved paginated Pixop Credits usage records.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/CreditsUsagePage"
             }
           }
         },
